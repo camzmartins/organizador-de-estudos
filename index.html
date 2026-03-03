@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UFC Mobile</title>
+
+<link rel="icon" type="image/jpeg" href="https://i.ibb.co/Mkc4rK9K/Screenshot-20260218-105121-Google.jpg">
+<link rel="apple-touch-icon" href="https://i.ibb.co/Mkc4rK9K/Screenshot-20260218-105121-Google.jpg">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+body{margin:0;font-family:Arial;background:#081a33;color:white;}
+.screen{display:none;padding:20px;padding-bottom:80px;}
+.active{display:block;}
+.navbar{position:fixed;bottom:0;width:100%;background:#0f2b55;display:flex;justify-content:space-around;padding:10px 0;}
+.navbar button{background:none;border:none;color:white;font-size:14px;}
+.card{background:#0f2b55;padding:15px;margin:10px 0;border-radius:10px; position:relative;}
+input{width:100%;padding:8px;margin:5px 0;border-radius:8px;border:none;box-sizing:border-box;}
+button.action{background:#1e90ff;padding:10px;border:none;border-radius:8px;color:white;margin-top:5px;width:100%;}
+img{width:100%;border-radius:10px;margin-top:10px;}
+.del-btn{position:absolute; top:10px; right:10px; background:none; border:none; color:#e74c3c; font-size:18px;}
+.check-item{display:flex; align-items:center; margin-bottom:10px;}
+.check-item input{width:20px; height:20px; margin-right:10px;}
+</style>
+</head>
+
+<body>
+
+<div id="sorteador" class="screen active">
+<h2>🎯 Sorteador</h2>
+<input id="tf" type="number" placeholder="Total Fixação">
+<input id="qf" type="number" placeholder="Sortear Fixação">
+<input id="tp" type="number" placeholder="Total Propostas">
+<input id="qp" type="number" placeholder="Sortear Propostas">
+<button class="action" onclick="novaRodada()">Nova Rodada</button>
+<button class="action" onclick="foto('fix')">📸 Gabarito Fixação</button>
+<input type="file" accept="image/*" capture="environment" id="fixFile" hidden>
+<button class="action" onclick="foto('prop')">📸 Gabarito Propostas</button>
+<input type="file" accept="image/*" capture="environment" id="propFile" hidden>
+<button class="action" onclick="verQuestoes()">Ver Questões</button>
+<div id="resultado"></div>
+<button class="action" onclick="toggleGab()">Mostrar / Esconder Gabarito</button>
+<div id="gabBox" style="display:none"><img id="fixImg"><img id="propImg"></div>
+</div>
+
+<div id="revisao" class="screen">
+<h2>📚 Revisão</h2>
+<div id="listaRevisao"></div>
+</div>
+
+<div id="simulados" class="screen">
+<h2>📊 Simulados</h2>
+<div class="card">
+<input id="nomeSim" placeholder="Nome do simulado">
+<input id="ling" type="number" placeholder="Linguagens">
+<input id="hum" type="number" placeholder="Humanas">
+<input id="nat" type="number" placeholder="Natureza">
+<input id="mat" type="number" placeholder="Matemática">
+<button class="action" onclick="addSimulado()">Adicionar</button>
+</div>
+<div id="listaSimulados"></div>
+</div>
+
+<div class="navbar">
+<button onclick="show('sorteador')">🎯</button>
+<button onclick="show('revisao')">📚</button>
+<button onclick="show('simulados')">📊</button>
+</div>
+
+<script>
+function show(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+let fixOK=false,propOK=false,sorteado=false;
+function foto(tipo){document.getElementById(tipo==='fix'?'fixFile':'propFile').click();}
+fixFile.onchange=e=>{fixImg.src=URL.createObjectURL(e.target.files[0]);fixOK=true;}
+propFile.onchange=e=>{propImg.src=URL.createObjectURL(e.target.files[0]);propOK=true;}
+function sortear(t,q){let n=[];while(n.length<q){let r=Math.floor(Math.random()*t)+1;if(!n.includes(r))n.push(r);}return n.sort((a,b)=>a-b);}
+function novaRodada(){fixOK=false;propOK=false;sorteado=false;resultado.innerHTML="";gabBox.style.display="none";fixImg.src="";propImg.src="";fixFile.value="";propFile.value="";}
+function verQuestoes(){if(!fixOK||!propOK){alert("Tire as fotos.");return;}
+let f=sortear(tf.value,qf.value);let p=sortear(tp.value,qp.value);
+resultado.innerHTML="<br><b>Fixação:</b> "+f.join(", ")+"<br><b>Propostas:</b> "+p.join(", ");sorteado=true;}
+function toggleGab(){if(!sorteado)return;gabBox.style.display=gabBox.style.display==="none"?"block":"none";}
+
+let simulados=JSON.parse(localStorage.getItem("simulados"))||[];
+function addSimulado(){
+let s={nome:nomeSim.value,ling:ling.value,hum:hum.value,nat:nat.value,mat:mat.value};
+simulados.push(s);localStorage.setItem("simulados",JSON.stringify(simulados));renderSimulados();}
+function delSimulado(i){if(confirm("Apagar?")){simulados.splice(i,1);localStorage.setItem("simulados",JSON.stringify(simulados));renderSimulados();}}
+function renderSimulados(){listaSimulados.innerHTML="";simulados.forEach((s,i)=>{
+listaSimulados.innerHTML+=`<div class="card"><button class="del-btn" onclick="delSimulado(${i})">🗑️</button><strong>${s.nome}</strong><br>🗣️ ${s.ling} | 🌎 ${s.hum} | 🌿 ${s.nat} | 📐 ${s.mat}</div>`})}
+renderSimulados();
+
+let materias=[{name:"🧬 Biologia",cor:"#2ecc71"},{name:"⚛️ Física",cor:"#2ecc71"},{name:"🧪 Química",cor:"#2ecc71"},{name:"📐 Matemática",cor:"#3498db"},{name:"🏛️ História",cor:"#e67e22"},{name:"🌍 Geografia",cor:"#e67e22"},{name:"👥 Sociologia",cor:"#e67e22"},{name:"🤔 Filosofia",cor:"#e67e22"},{name:"📖 Português",cor:"#e74c3c"},{name:"✍️ Redação",cor:"#e74c3c"}];
+let revisao=JSON.parse(localStorage.getItem("revisao"))||{};let aberta=null;
+function renderRevisao(){listaRevisao.innerHTML="";materias.forEach(m=>{
+let pend=(revisao[m.name]||[]).filter(x=>!x.ok).length;
+let html=`<div class="card" style="border-left:5px solid ${m.cor}"><div onclick="toggle('${m.name}')" style="display:flex;justify-content:space-between;cursor:pointer;"><strong>${m.name} (${pend})</strong><span>${aberta===m.name?'▼':'▶'}</span></div>`;
+if(aberta===m.name){html+=`<div style="margin-top:10px;">`;(revisao[m.name]||[]).forEach((a,i)=>{
+html+=`<div class="check-item"><input type="checkbox" ${a.ok?'checked':''} onchange="check('${m.name}',${i})"><span style="${a.ok?'text-decoration:line-through;opacity:0.5':''}">${a.nome}</span><button onclick="delAssunto('${m.name}',${i})" style="background:none;border:none;color:red;margin-left:auto;">✕</button></div>`});
+html+=`<div style="display:flex;gap:5px;"><input id="new_${m.name}" placeholder="Assunto..." style="margin:0;"><button class="action" style="width:50px;margin:0;" onclick="add('${m.name}')">➕</button></div></div>`;}
+listaRevisao.innerHTML+=html+'</div>';})}
+function toggle(n){aberta=aberta===n?null:n;renderRevisao();}
+function add(m){let val=document.getElementById('new_'+m).value;if(!val)return;if(!revisao[m])revisao[m]=[];revisao[m].push({nome:val,ok:false});localStorage.setItem("revisao",JSON.stringify(revisao));renderRevisao();}
+function check(m,i){revisao[m][i].ok=!revisao[m][i].ok;localStorage.setItem("revisao",JSON.stringify(revisao));renderRevisao();}
+function delAssunto(m,i){revisao[m].splice(i,1);localStorage.setItem("revisao",JSON.stringify(revisao));renderRevisao();}
+renderRevisao();
+</script>
+</body>
+</html>
